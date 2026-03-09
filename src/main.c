@@ -60,11 +60,32 @@ int main(int argc, char** argv)
     SetConsoleCP(CP_UTF8);
 
     const char* path = (argc > 1) ? argv[1] : ".";
+
+    char full[MAX_PATH];
+    GetFullPathNameA(path, MAX_PATH, full, NULL);
+
+    char root[MAX_PATH];
+
+    if (GetVolumePathNameA(full, root, MAX_PATH))
+    {
+        DWORD serial = 0;
+
+        printf("Drive: %s\n", root);
+
+        if (GetVolumeInformationA(root, NULL, 0, &serial, NULL, NULL, NULL, 0))
+        {
+            printf("Volume Serial Number: " YELLOW "%04X-%04X" RESET "\n\n", (UINT)(serial >> 16), (UINT)(serial & 0xFFFF));
+        }
+    }
+
+    // Count of Files and Dirs
 	int files = 0;
     int dirs = 0;
 
-	printf(GREEN "%s" RESET "\n", path);
+	printf(GREEN "%s" RESET "\n", full);
+
 	list_dir(path, "", 1, &files, &dirs);
+
 	printf("\n" YELLOW "%d" RESET " directories, " YELLOW "%d" RESET " files\n", dirs, files);
 	fflush(stdout);
 
