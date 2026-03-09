@@ -23,7 +23,8 @@ void free_list(Node* head)
     }
 }
 
-void list_dir(const char* base, const char* prefix, int* file_count, int* dir_count) {
+void list_dir(const char* base, const char* prefix, int* file_count, int* dir_count)
+{
     char search_path[MAX_PATH];
     snprintf(search_path, MAX_PATH, "%s\\*", base);
 
