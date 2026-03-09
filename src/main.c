@@ -83,13 +83,21 @@ void list_dir(const char* base, const char* prefix, int* file_count, int* dir_co
             char next_path[MAX_PATH];
             int path_len = snprintf(next_path, MAX_PATH, "%s\\%s", base, current->data.cFileName);
 
-            if (path_len >= MAX_PATH)
+            if (path_len < 0 || path_len >= MAX_PATH)
             {
-                fprintf(stderr, "Error: Path too long: '%s'. Skipping.\n", current->data.cFileName);
+                fprintf(stderr, "Error: Path too long: " YELLOW "'%s'" RESET ". Skipping.\n", current->data.cFileName);
             } 
             else
             {
-                int needed = snprintf(NULL, 0, "%s%s   ", prefix, is_last ? " " : "│") + 1;
+                int probe = snprintf(NULL, 0, "%s%s   ", prefix, is_last ? " " : "│");
+
+                if (probe < 0)
+                {
+                    fprintf(stderr, "Error: Encoding failed for prefix at " YELLOW "'%s'" RESET ". Skipping.\n", current->data.cFileName);
+                    continue;
+                }
+
+                size_t needed = (size_t)probe + 1;
                 char* next_prefix = malloc(needed);
 
                 if (next_prefix)
@@ -103,7 +111,7 @@ void list_dir(const char* base, const char* prefix, int* file_count, int* dir_co
                 }
                 else
                 {
-                    fprintf(stderr, "Error: Memory exhausted at '%s'.\n", current->data.cFileName);
+                    fprintf(stderr, "Error: Memory exhausted at " YELLOW "'%s'" RESET ".\n", current->data.cFileName);
                 }
             }
         }
