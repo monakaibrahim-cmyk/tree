@@ -55,14 +55,22 @@ void list_dir(const char* base, const char* prefix, int* file_count, int* dir_co
         if (entries.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         {
             (*dir_count)++;
-            char new_prefix[MAX_PATH];
 
-            snprintf(new_prefix, MAX_PATH, "%s%s   ", prefix, is_last ? " " : "│");
-            
+            int needed = snprintf(NULL, 0, "%s%s   ", prefix, is_last ? " " : "│") + 1;
+            char* new_prefix = (char*)malloc(needed);
             char next_path[MAX_PATH];
 
+            if (new_prefix == NULL)
+            {
+                fprintf(stderr, "Error: Memory allocation failed at depth. Aborting traversal.\n");
+                FindClose(hFind);
+                return;
+            }
+
+            snprintf(new_prefix, needed, "%s%s   ", prefix, is_last ? " " : "│");
             snprintf(next_path, MAX_PATH, "%s\\%s", base, entries.cFileName);
             list_dir(next_path, new_prefix, file_count, dir_count);
+            free(new_prefix);
         }
         else
         {
@@ -86,7 +94,7 @@ int main(int argc, char** argv)
 
     if (result == 0)
     {
-        fprintf(stderr, "Error: GetFullPathNameA failed with code %lu\n", GetLastError());
+        fprintf(stderr, "Error: GetFullPathNameA failed with code " YELLOW "%lu" RESET "\n", GetLastError());
         return EXIT_FAILURE;
     }
     else if (result >= MAX_PATH)
@@ -96,7 +104,7 @@ int main(int argc, char** argv)
     }
 
     char root[MAX_PATH];
-    char type[MAX_PATH];
+    char type[10];
 
     if (GetVolumePathNameA(full, root, MAX_PATH))
     {
