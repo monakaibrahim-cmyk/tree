@@ -84,7 +84,7 @@ int main(int argc, char** argv)
 
 	printf(GREEN "%s" RESET "\n", full);
 
-	list_dir(path, "", 1, &files, &dirs);
+	list_dir(full, "", 1, &files, &dirs);
 
 	printf("\n" YELLOW "%d" RESET " directories, " YELLOW "%d" RESET " files\n", dirs, files);
 	fflush(stdout);
