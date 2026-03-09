@@ -49,6 +49,7 @@ void list_dir(const char* base, const char* prefix, int* file_count, int* dir_co
 
         if (!new_node)
         {
+            fprintf(stderr, "Error: Memory exhausted while enumerating " YELLOW "'%s' " RESET ". Output may be incomplete.\n", base);
             break;
         }
 
@@ -79,24 +80,31 @@ void list_dir(const char* base, const char* prefix, int* file_count, int* dir_co
 
         if (current->data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         {
-            int needed = snprintf(NULL, 0, "%s%s   ", prefix, is_last ? " " : "│") + 1;
-            char* next_prefix = malloc(needed);
+            char next_path[MAX_PATH];
+            int path_len = snprintf(next_path, MAX_PATH, "%s\\%s", base, current->data.cFileName);
 
-            if (next_prefix)
+            if (path_len >= MAX_PATH)
             {
-                snprintf(next_prefix, needed, "%s%s   ", prefix, is_last ? " " : "│");
-
-                char next_path[MAX_PATH];
-
-                snprintf(next_path, MAX_PATH, "%s\\%s", base, current->data.cFileName);
-
-                (*dir_count)++;
-                list_dir(next_path, next_prefix, file_count, dir_count);
-                free(next_prefix);
-            }
+                fprintf(stderr, "Error: Path too long: '%s'. Skipping.\n", current->data.cFileName);
+            } 
             else
             {
-                fprintf(stderr, "Error: Memory exhausted at " YELLOW "%s" RESET ". Skipping directory contents.\n", current->data.cFileName);
+                int needed = snprintf(NULL, 0, "%s%s   ", prefix, is_last ? " " : "│") + 1;
+                char* next_prefix = malloc(needed);
+
+                if (next_prefix)
+                {
+                    snprintf(next_prefix, needed, "%s%s   ", prefix, is_last ? " " : "│");
+                    
+                    (*dir_count)++;
+                    list_dir(next_path, next_prefix, file_count, dir_count);
+                    
+                    free(next_prefix);
+                }
+                else
+                {
+                    fprintf(stderr, "Error: Memory exhausted at '%s'.\n", current->data.cFileName);
+                }
             }
         }
         else
