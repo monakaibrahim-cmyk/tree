@@ -1,6 +1,5 @@
-#include <ctype.h>
-#include <stdio.h>
 #include <windows.h>
+#include <stdio.h>
 
 #define GREEN   "\x1B[32m"
 #define YELLOW  "\x1B[33m"
@@ -90,7 +89,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "Error: GetFullPathNameA failed with code %lu\n", GetLastError());
         return EXIT_FAILURE;
     }
-    else if (result > MAX_PATH)
+    else if (result >= MAX_PATH)
     {
         fprintf(stderr, "Error: The full path is longer than the buffer size.\n");
         return EXIT_FAILURE;
