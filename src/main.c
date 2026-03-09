@@ -1,85 +1,108 @@
 #include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define GREEN   "\x1B[32m"
 #define YELLOW  "\x1B[33m"
 #define RESET "\x1B[0m"
 
-void list_dir(const char* base, const char* prefix, int* file_count, int* dir_count)
+typedef struct Node
 {
+    WIN32_FIND_DATA data;
+    struct Node* next;
+} Node;
+
+void free_list(Node* head)
+{
+    while (head)
+    {
+        Node* temp = head;
+        head = head->next;
+        free(temp);
+    }
+}
+
+void list_dir(const char* base, const char* prefix, int* file_count, int* dir_count) {
     char search_path[MAX_PATH];
     snprintf(search_path, MAX_PATH, "%s\\*", base);
 
-    WIN32_FIND_DATA entries;
-    HANDLE hFind = FindFirstFile(search_path, &entries);
+    WIN32_FIND_DATA ffd;
+    HANDLE hFind = FindFirstFile(search_path, &ffd);
 
     if (hFind == INVALID_HANDLE_VALUE)
     {
         return;
     }
 
-    int total = 0;
+    Node *head = NULL, *tail = NULL;
 
     do
     {
-        if (strcmp(entries.cFileName, ".") != 0 && strcmp(entries.cFileName, "..") != 0)
-        {
-            total++;
-        }
-    }
-    while (FindNextFile(hFind, &entries));
-    
-    FindClose(hFind);
-
-    hFind = FindFirstFile(search_path, &entries);
-
-    if (hFind == INVALID_HANDLE_VALUE)
-    {
-        return;
-    }
-    
-    int current = 0;
-
-    do
-    {
-        if (strcmp(entries.cFileName, ".") == 0 || strcmp(entries.cFileName, "..") == 0)
+        if (strcmp(ffd.cFileName, ".") == 0 || strcmp(ffd.cFileName, "..") == 0)
         {
             continue;
         }
 
-        current++;
-        int is_last = (current == total);
+        Node* new_node = (Node*)malloc(sizeof(Node));
 
-        printf("%s%s " GREEN "%s" RESET "\n", prefix, is_last ? "└──" : "├──", entries.cFileName);
+        if (!new_node)
+        {
+            break;
+        }
 
-        if (entries.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        new_node->data = ffd;
+        new_node->next = NULL;
+
+        if (!head)
+        {
+            head = tail = new_node;
+        }
+        else
+        { 
+            tail->next = new_node;
+            tail = new_node;
+        }
+    }
+    while (FindNextFile(hFind, &ffd));
+    
+    FindClose(hFind);
+
+    Node* current = head;
+
+    while (current)
+    {
+        int is_last = (current->next == NULL);
+        
+        printf("%s%s " GREEN "%s\n" RESET, prefix, is_last ? "└──" : "├──", current->data.cFileName);
+
+        if (current->data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         {
             (*dir_count)++;
-
             int needed = snprintf(NULL, 0, "%s%s   ", prefix, is_last ? " " : "│") + 1;
-            char* new_prefix = (char*)malloc(needed);
-            char next_path[MAX_PATH];
+            char* next_prefix = malloc(needed);
 
-            if (new_prefix == NULL)
+            if (next_prefix)
             {
-                fprintf(stderr, "Error: Memory allocation failed at depth. Aborting traversal.\n");
-                FindClose(hFind);
-                return;
-            }
+                snprintf(next_prefix, needed, "%s%s   ", prefix, is_last ? " " : "│");
 
-            snprintf(new_prefix, needed, "%s%s   ", prefix, is_last ? " " : "│");
-            snprintf(next_path, MAX_PATH, "%s\\%s", base, entries.cFileName);
-            list_dir(next_path, new_prefix, file_count, dir_count);
-            free(new_prefix);
+                char next_path[MAX_PATH];
+
+                snprintf(next_path, MAX_PATH, "%s\\%s", base, current->data.cFileName);
+
+                list_dir(next_path, next_prefix, file_count, dir_count);
+                free(next_prefix);
+            }
         }
         else
         {
             (*file_count)++;
         }
-    }
-    while (FindNextFile(hFind, &entries));
 
-    FindClose(hFind);
+        current = current->next;
+    }
+
+    free_list(head);
 }
 
 int main(int argc, char** argv)
@@ -104,7 +127,7 @@ int main(int argc, char** argv)
     }
 
     char root[MAX_PATH];
-    char type[10];
+    char type[32];
 
     if (GetVolumePathNameA(full, root, MAX_PATH))
     {
