@@ -26,7 +26,12 @@ void free_list(Node* head)
 void list_dir(const char* base, const char* prefix, int* file_count, int* dir_count)
 {
     char search_path[MAX_PATH];
-    snprintf(search_path, MAX_PATH, "%s\\*", base);
+    int sp_len = snprintf(search_path, MAX_PATH, "%s\\*", base);
+
+    if (sp_len < 0 || sp_len >= MAX_PATH)
+    {
+        return;
+    }
 
     WIN32_FIND_DATA ffd;
     HANDLE hFind = FindFirstFile(search_path, &ffd);
@@ -80,6 +85,7 @@ void list_dir(const char* base, const char* prefix, int* file_count, int* dir_co
 
         if (current->data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         {
+            (*dir_count)++;
             char next_path[MAX_PATH];
             int path_len = snprintf(next_path, MAX_PATH, "%s\\%s", base, current->data.cFileName);
 
@@ -99,8 +105,6 @@ void list_dir(const char* base, const char* prefix, int* file_count, int* dir_co
                 {
                     size_t needed = (size_t)probe + 1;
                     char* next_prefix = malloc(needed);
-
-                    (*dir_count)++;
 
                     if (next_prefix)
                     {
