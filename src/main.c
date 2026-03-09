@@ -94,24 +94,25 @@ void list_dir(const char* base, const char* prefix, int* file_count, int* dir_co
                 if (probe < 0)
                 {
                     fprintf(stderr, "Error: Encoding failed for prefix at " YELLOW "'%s'" RESET ". Skipping.\n", current->data.cFileName);
-                    continue;
-                }
-
-                size_t needed = (size_t)probe + 1;
-                char* next_prefix = malloc(needed);
-
-                if (next_prefix)
-                {
-                    snprintf(next_prefix, needed, "%s%s   ", prefix, is_last ? " " : "│");
-                    
-                    (*dir_count)++;
-                    list_dir(next_path, next_prefix, file_count, dir_count);
-                    
-                    free(next_prefix);
                 }
                 else
                 {
-                    fprintf(stderr, "Error: Memory exhausted at " YELLOW "'%s'" RESET ".\n", current->data.cFileName);
+                    size_t needed = (size_t)probe + 1;
+                    char* next_prefix = malloc(needed);
+
+                    if (next_prefix)
+                    {
+                        snprintf(next_prefix, needed, "%s%s   ", prefix, is_last ? " " : "│");
+                        
+                        (*dir_count)++;
+                        list_dir(next_path, next_prefix, file_count, dir_count);
+                        
+                        free(next_prefix);
+                    }
+                    else
+                    {
+                        fprintf(stderr, "Error: Memory exhausted at " YELLOW "'%s'" RESET ".\n", current->data.cFileName);
+                    }
                 }
             }
         }
