@@ -74,11 +74,10 @@ void list_dir(const char* base, const char* prefix, int* file_count, int* dir_co
     {
         int is_last = (current->next == NULL);
         
-        printf("%s%s " GREEN "%s\n" RESET, prefix, is_last ? "└──" : "├──", current->data.cFileName);
+        printf("%s%s " GREEN "%s" RESET "\n", prefix, is_last ? "└──" : "├──", current->data.cFileName);
 
         if (current->data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         {
-            (*dir_count)++;
             int needed = snprintf(NULL, 0, "%s%s   ", prefix, is_last ? " " : "│") + 1;
             char* next_prefix = malloc(needed);
 
@@ -90,8 +89,13 @@ void list_dir(const char* base, const char* prefix, int* file_count, int* dir_co
 
                 snprintf(next_path, MAX_PATH, "%s\\%s", base, current->data.cFileName);
 
+                (*dir_count)++;
                 list_dir(next_path, next_prefix, file_count, dir_count);
                 free(next_prefix);
+            }
+            else
+            {
+                fprintf(stderr, "Error: Memory exhausted at " YELLOW "%s" RESET ". Skipping directory contents.\n", current->data.cFileName);
             }
         }
         else
