@@ -100,13 +100,12 @@ void list_dir(const char* base, const char* prefix, int* file_count, int* dir_co
                     size_t needed = (size_t)probe + 1;
                     char* next_prefix = malloc(needed);
 
+                    (*dir_count)++;
+
                     if (next_prefix)
                     {
                         snprintf(next_prefix, needed, "%s%s   ", prefix, is_last ? " " : "│");
-                        
-                        (*dir_count)++;
                         list_dir(next_path, next_prefix, file_count, dir_count);
-                        
                         free(next_prefix);
                     }
                     else
