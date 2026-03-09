@@ -1,0 +1,41 @@
+name: C Build Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure CMake
+      run: cmake -B build
+
+    - name: Build project
+      run: cmake --build build
+
+    - name: Run Basic Tests
+      shell: powershell
+      run: |
+        if (Test-Path "./build/debug/tree.exe")
+        {
+          Write-Host "Build successful!"
+        }
+        else
+        {
+          Write-Host "Executable not found!"
+          exit 1
+        }
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Compiled
+        path: |
+          build/debug/*.exe
