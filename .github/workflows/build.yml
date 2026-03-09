@@ -2,9 +2,9 @@ name: C Build Test
 
 on:
   push:
-    branches: [main]
+    branches: [main, development]
   pull_request:
-    branches: [main]
+    branches: [main, development]
 
 jobs:
   build:
@@ -34,6 +34,7 @@ jobs:
         }
 
     - name: Upload Build Artifacts
+      if: github.ref == 'refs/heads/development'
       uses: actions/upload-artifact@v4
       with:
         name: Compiled
