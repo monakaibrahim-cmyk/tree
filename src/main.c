@@ -33,6 +33,12 @@ void list_dir(const char* base, const char* prefix, int* file_count, int* dir_co
     FindClose(hFind);
 
     hFind = FindFirstFile(search_path, &entries);
+
+    if (hFind == INVALID_HANDLE_VALUE)
+    {
+        return;
+    }
+    
     int current = 0;
 
     do
